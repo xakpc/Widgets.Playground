@@ -1,9 +1,13 @@
 using Microsoft.Windows.Widgets.Providers;
+using System.Runtime.InteropServices;
 using Xakpc.Widgets.Playground.Models;
 using Xakpc.Widgets.Playground.Services;
 
 namespace Xakpc.Widgets.Playground;
 
+[ComVisible(true)]
+[ComDefaultInterface(typeof(IWidgetProvider))]
+[Guid("4C363B3C-0E2D-4ACF-A797-40DE1B6D4FAD")] // Source of truth for COM registration; manifest must use the same CLSID.
 internal sealed class WidgetProvider : IWidgetProvider
 {
     private const string DefaultFact = "Loading your first cat fact...";
@@ -13,6 +17,8 @@ internal sealed class WidgetProvider : IWidgetProvider
     private readonly Lock _sync = new();
     private readonly Dictionary<string, CompactWidgetInfo> _runningWidgets = new(StringComparer.Ordinal);
     private readonly CatFactService _catFacts = new();
+    // Signals Program.cs when the last widget is removed so process can exit.
+    private static readonly ManualResetEvent EmptyWidgetListEvent = new(false);
 
     // Load template files once from packaged output.
     private static readonly Lazy<string> MainTemplate = new(() => LoadTemplate("Templates/CatFactTemplate.json"));
@@ -36,6 +42,12 @@ internal sealed class WidgetProvider : IWidgetProvider
         lock (_sync)
         {
             _runningWidgets.Remove(widgetId);
+
+            // No widgets left: allow non-console process lifetime wait to complete.
+            if (_runningWidgets.Count == 0)
+            {
+                EmptyWidgetListEvent.Set();
+            }
         }
     }
 
@@ -82,6 +94,9 @@ internal sealed class WidgetProvider : IWidgetProvider
         // Intentionally minimal for tutorial: no active polling to pause.
     }
 
+    // Program.cs waits on this in non-console mode.
+    public static WaitHandle GetEmptyWidgetListEvent() => EmptyWidgetListEvent;
+
     private CompactWidgetInfo GetOrCreateWidget(WidgetContext context, string? customState)
     {
         lock (_sync)
@@ -104,6 +119,8 @@ internal sealed class WidgetProvider : IWidgetProvider
             };
 
             _runningWidgets[created.WidgetId] = created;
+            // At least one active widget exists, keep provider process alive.
+            EmptyWidgetListEvent.Reset();
             return Clone(created);
         }
     }
@@ -213,6 +230,17 @@ internal sealed class WidgetProvider : IWidgetProvider
                         DefinitionId = context.DefinitionId,
                         CustomState = string.IsNullOrWhiteSpace(info.CustomState) ? DefaultFact : info.CustomState
                     };
+                }
+
+                if (_runningWidgets.Count == 0)
+                {
+                    // If app starts with no pinned widgets, no wait is needed.
+                    EmptyWidgetListEvent.Set();
+                }
+                else
+                {
+                    // Existing pinned widgets require process to remain available.
+                    EmptyWidgetListEvent.Reset();
                 }
             }
         }
