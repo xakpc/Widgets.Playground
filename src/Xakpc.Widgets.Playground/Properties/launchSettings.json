@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "Provider": {
+      "commandName": "MsixPackage",
+      "commandLineArgs": "-RegisterProcessAsComServer"
+    },
+    "Provider on launch": {
+      "commandName": "MsixPackage",
+      "commandLineArgs": "-RegisterProcessAsComServer",
+      "doNotLaunchApp": true
+    }
+  }
+}
