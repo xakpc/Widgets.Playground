@@ -2,27 +2,30 @@
   "type": "AdaptiveCard",
   "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
   "version": "1.5",
-  "backgroundImage": {
-    "url": "ms-appx:///Assets/background-small.png",
-    "fillMode": "Cover",
-    "horizontalAlignment": "Center",
-    "verticalAlignment": "Center"
+  "backgroundImage": "${backgroundImageDataUri}",
+  "header": {
+    "text": "Random Cat Fact"
   },
   "body": [
     {
       "type": "Container",
-      "style": "emphasis",
       "items": [
         {
           "type": "TextBlock",
-          "text": "Cat Fact",
+          "text": "${fact}",
+          "horizontalAlignment": "Center",
           "weight": "Bolder",
-          "size": "Medium"
+          "wrap": true,
+          "$when": "${$host.widgetSize == \"small\"}"
         },
         {
           "type": "TextBlock",
           "text": "${fact}",
-          "wrap": true
+          "horizontalAlignment": "Center",
+          "weight": "Bolder",
+          "wrap": true,
+          "size": "Large",
+          "$when": "${$host.widgetSize != \"small\"}"
         },
         {
           "type": "TextBlock",
@@ -32,22 +35,19 @@
           "isSubtle": true,
           "size": "Small",
           "$when": "${errorMessage != null}"
-        },
-        {
-          "type": "TextBlock",
-          "text": "Size: ${$host.widgetSize}",
-          "isSubtle": true,
-          "size": "Small",
-          "$when": "${$host.widgetSize != \"small\"}"
         }
-      ]
+      ],
+      "height": "stretch",
+      "horizontalAlignment": "Center",
+      "verticalContentAlignment": "Center"
     }
   ],
   "actions": [
     {
       "type": "Action.Execute",
       "title": "Refresh",
-      "verb": "refresh"
+      "verb": "refresh",
+      "$when": "${$host.widgetSize != \"small\"}"
     }
   ]
 }

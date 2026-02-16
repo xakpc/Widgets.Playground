@@ -9,7 +9,7 @@ This step adds the two card templates used by the widget UI:
 
 After this step, the project should include:
 
-- a reusable main template with data binding and a refresh action
+- a reusable main template with data binding, background image binding, and a refresh action
 - a lightweight loading template for startup and refresh transitions
 - template files tracked as project content assets
 
@@ -43,7 +43,7 @@ For this tutorial, use a small-widget background image with these requirements:
 
 - target size: `300x200` pixels
 - aspect ratio: `3:2`
-- file path used by template: `Assets/background-small.png`
+- source asset path in project: `Assets/background-small.png`
 - keep the visual focus near the center so text remains readable with overlay
 
 ## How Background Rendering Works
@@ -51,6 +51,7 @@ For this tutorial, use a small-widget background image with these requirements:
 For widget templates, background visuals can come from `backgroundImage` on the root `AdaptiveCard` (or on a container).
 
 - `backgroundImage` supports URL/data URL image sources.
+- in this tutorial, use a base64 data URL (`data:image/png;base64,...`) provided via template data
 - common formats: PNG, JPEG, GIF.
 - with `fillMode: "cover"`, the image fills available space and may crop.
 - `horizontalAlignment` / `verticalAlignment` control crop position when cropping is needed.
@@ -75,7 +76,7 @@ Example:
 }
 ```
 
-In this tutorial we use one background image plus a `Container` with `style: "emphasis"` to preserve text readability in both themes.
+In this tutorial we use one background image and a compact text layout so the visual background stays visible.
 
 Reference:
 - https://learn.microsoft.com/en-us/windows/apps/design/widgets/widgets-create-a-template
@@ -91,7 +92,7 @@ Reference:
 Quick guidance for this tutorial:
 
 - `1.0`: core card structure (`type`, `body`, `actions`)
-- `1.2`: `BackgroundImage` object support (card/container backgrounds)
+- `1.2`: background image support on card/container
 - `1.4`: `Action.Execute` support in Adaptive Card schema
 - `1.5`: safe modern baseline used in our templates
 
@@ -131,27 +132,30 @@ Add template content entries to `src/Xakpc.Widgets.Playground/Xakpc.Widgets.Play
   "type": "AdaptiveCard",
   "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
   "version": "1.5",
-  "backgroundImage": {
-    "url": "ms-appx:///Assets/background-small.png",
-    "fillMode": "Cover",
-    "horizontalAlignment": "Center",
-    "verticalAlignment": "Center"
+  "backgroundImage": "${backgroundImageDataUri}",
+  "header": {
+    "text": "Random Cat Fact"
   },
   "body": [
     {
       "type": "Container",
-      "style": "emphasis",
       "items": [
         {
           "type": "TextBlock",
-          "text": "Cat Fact",
+          "text": "${fact}",
+          "horizontalAlignment": "Center",
           "weight": "Bolder",
-          "size": "Medium"
+          "wrap": true,
+          "$when": "${$host.widgetSize == \"small\"}"
         },
         {
           "type": "TextBlock",
           "text": "${fact}",
-          "wrap": true
+          "horizontalAlignment": "Center",
+          "weight": "Bolder",
+          "wrap": true,
+          "size": "Large",
+          "$when": "${$host.widgetSize != \"small\"}"
         },
         {
           "type": "TextBlock",
@@ -161,22 +165,19 @@ Add template content entries to `src/Xakpc.Widgets.Playground/Xakpc.Widgets.Play
           "isSubtle": true,
           "size": "Small",
           "$when": "${errorMessage != null}"
-        },
-        {
-          "type": "TextBlock",
-          "text": "Size: ${$host.widgetSize}",
-          "isSubtle": true,
-          "size": "Small",
-          "$when": "${$host.widgetSize != \"small\"}"
         }
-      ]
+      ],
+      "height": "stretch",
+      "horizontalAlignment": "Center",
+      "verticalContentAlignment": "Center"
     }
   ],
   "actions": [
     {
       "type": "Action.Execute",
       "title": "Refresh",
-      "verb": "refresh"
+      "verb": "refresh",
+      "$when": "${$host.widgetSize != \"small\"}"
     }
   ]
 }
@@ -194,15 +195,10 @@ Add template content entries to `src/Xakpc.Widgets.Playground/Xakpc.Widgets.Play
   "body": [
     {
       "type": "TextBlock",
-      "text": "Cat Fact",
-      "weight": "Bolder",
-      "size": "Medium"
-    },
-    {
-      "type": "TextBlock",
       "text": "Loading latest fact...",
       "isSubtle": true,
-      "wrap": true
+      "wrap": true,
+      "height": "stretch"
     }
   ]
 }
@@ -211,9 +207,9 @@ Add template content entries to `src/Xakpc.Widgets.Playground/Xakpc.Widgets.Play
 ## Why This Template Shape
 
 - `${fact}` keeps data binding explicit and simple for beginners.
-- `refresh` action verb gives one clear interaction path.
-- background image gives visual identity while keeping card layout simple.
-- `style: "emphasis"` acts as a readability overlay for text.
+- `backgroundImageDataUri` keeps card background reliable in widget host rendering.
+- one text layout for `small` and one for non-`small` keeps small readable and medium/large punchier.
+- `refresh` action is hidden on `small`; `medium` and `large` show the button.
 - `$when` on `errorMessage` introduces conditional UI without adding complexity.
 - separate loading template avoids blank UI during async work.
 
@@ -234,7 +230,7 @@ Expected result: successful build with template assets included.
 ## Common Mistakes
 
 - Using invalid Adaptive Card schema version.
-- Misspelling binding names (`fact`, `errorMessage`).
+- Misspelling binding names (`fact`, `errorMessage`, `backgroundImageDataUri`).
 - Forgetting to include template files as content assets.
 
 ## Next Step

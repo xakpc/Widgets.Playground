@@ -10,6 +10,7 @@ After this step, the project should have:
 - startup restoration of already-pinned widgets
 - fire-and-forget refresh flow from synchronous callbacks
 - update helpers for loading/main card rendering
+- data payload support for `backgroundImageDataUri`
 
 ## Scope
 
@@ -69,6 +70,7 @@ internal sealed class WidgetProvider : IWidgetProvider
 
 - handle only `refresh` verb
 - trigger async refresh for that widget id
+- in current templates, refresh action is visible on non-small sizes (`medium`/`large`)
 
 ### OnWidgetContextChanged
 
@@ -77,8 +79,7 @@ internal sealed class WidgetProvider : IWidgetProvider
 
 ### Activate / Deactivate
 
-- `Activate` re-renders current state
-- if only default state is available, trigger refresh
+- `Activate` re-renders current state and triggers a background refresh
 - `Deactivate` stays minimal in this tutorial (no polling system yet)
 
 ### Startup restoration
@@ -169,7 +170,7 @@ No API refetch here; same fact is re-rendered under new host context.
 
 1. ensures widget state exists
 2. sends current fact immediately
-3. if state is empty/default, triggers refresh
+3. always triggers background refresh so non-medium sizes still refresh on activation
 
 `Deactivate(...)`:
 
@@ -202,7 +203,7 @@ Important race handling:
 `SendFactWidget(...)` sends:
 
 - `Template = MainTemplate`
-- `Data = BuildDataPayload(...)`
+- `Data = BuildDataPayload(...)` with `fact`, `errorMessage`, and `backgroundImageDataUri`
 - `CustomState = fact`
 
 `CustomState` is critical:
@@ -217,6 +218,17 @@ Widget data is passed as a raw JSON string.
 If fact text contains quotes or slashes and is not escaped, payload becomes invalid JSON and rendering can fail.
 `EscapeJson(...)` prevents that by escaping `\` and `"` before payload assembly.
 
+### 10. Background image data flow
+
+Current card background is data-driven:
+
+1. provider loads `Assets/background-small.png` once
+2. provider converts bytes to `data:image/png;base64,...`
+3. payload includes `backgroundImageDataUri`
+4. template binds `backgroundImage` to `${backgroundImageDataUri}`
+
+This avoids relying on `ms-appx:///` URI resolution inside widget background rendering.
+
 ## Update Helper Snippet (Copy/Paste)
 
 ```csharp
@@ -229,11 +241,37 @@ private void SendFactWidget(CompactWidgetInfo widget, string? errorMessage)
     var update = new WidgetUpdateRequestOptions(widget.WidgetId)
     {
         Template = MainTemplate.Value,
-        Data = BuildDataPayload(fact, errorMessage),
+        Data = BuildDataPayload(fact, errorMessage, BackgroundImageDataUri.Value),
         CustomState = fact
     };
 
     WidgetManager.GetDefault().UpdateWidget(update);
+}
+```
+
+## Background Data Payload Snippet (Copy/Paste)
+
+```csharp
+private static string BuildDataPayload(string fact, string? errorMessage, string backgroundImageDataUri)
+{
+    if (string.IsNullOrWhiteSpace(errorMessage))
+    {
+        return $$"""{"fact":"{{EscapeJson(fact)}}","errorMessage":null,"backgroundImageDataUri":"{{EscapeJson(backgroundImageDataUri)}}"}""";
+    }
+
+    return $$"""{"fact":"{{EscapeJson(fact)}}","errorMessage":"{{EscapeJson(errorMessage)}}","backgroundImageDataUri":"{{EscapeJson(backgroundImageDataUri)}}"}""";
+}
+```
+
+## Image Data URI Helper Snippet (Copy/Paste)
+
+```csharp
+private static string LoadImageAsDataUri(string relativePath, string mimeType)
+{
+    var normalizedPath = relativePath.Replace('/', Path.DirectorySeparatorChar);
+    var fullPath = Path.Combine(AppContext.BaseDirectory, normalizedPath);
+    var imageBytes = File.ReadAllBytes(fullPath);
+    return $"data:{mimeType};base64,{Convert.ToBase64String(imageBytes)}";
 }
 ```
 
@@ -271,6 +309,7 @@ Expected result: successful build with provider lifecycle class compiled.
 - awaiting network calls directly inside synchronous callbacks.
 - forgetting to set `CustomState` when updating widget content.
 - skipping startup recovery, which causes blank state after app restart.
+- forgetting to include `backgroundImageDataUri` in payload while template expects it.
 
 ## Next Step
 

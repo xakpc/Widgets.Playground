@@ -32,6 +32,9 @@ Update `src/Xakpc.Widgets.Playground/Xakpc.Widgets.Playground.csproj`:
 
 These settings move the project from generic console build to Windows widget-capable build.
 
+Note:
+- the final tutorial project also sets a default `RuntimeIdentifier` (`win-x64`) during packaging setup in Step 09.
+
 ## Base `.csproj` Snippet (Copy/Paste)
 
 Use this as the target structure for Step 02:

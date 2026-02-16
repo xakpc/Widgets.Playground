@@ -5,15 +5,10 @@
   "body": [
     {
       "type": "TextBlock",
-      "text": "Cat Fact",
-      "weight": "Bolder",
-      "size": "Medium"
-    },
-    {
-      "type": "TextBlock",
       "text": "Loading latest fact...",
       "isSubtle": true,
-      "wrap": true
+      "wrap": true,
+      "height": "stretch"
     }
   ]
 }

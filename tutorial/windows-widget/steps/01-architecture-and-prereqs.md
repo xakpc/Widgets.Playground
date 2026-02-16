@@ -37,7 +37,7 @@ These can be explored after the core tutorial is complete.
 - **Windows 11**: widgets run on the Widget Board (`Win+W`).
 - **Visual Studio 2022 (17.8+)**: needed for packaging workflow and manifest editing.
 - **.NET SDK**: required for modern C# SDK-style builds.
-- **Windows SDK (10.0.19041.0+)**: required for Windows-targeted build and packaging tooling.
+- **Windows SDK (10.0.22000.0+)**: required for this tutorial target framework and packaging tooling.
 - **MSIX packaging support in Visual Studio**: required because widget providers are discovered from packaged app metadata.
 - **Developer Mode enabled**: required for local sideloading and debugging.
 
@@ -48,7 +48,7 @@ These can be explored after the core tutorial is complete.
 In Visual Studio Installer, verify:
 
 - Workload: **.NET desktop development**
-- Component: **Windows 10 SDK (10.0.19041.0+)** or newer
+- Component: **Windows SDK 10.0.22000.0** or newer
 - Component: **MSIX Packaging Tools** (or equivalent)
 
 ### 2. Verify .NET SDK

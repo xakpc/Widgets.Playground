@@ -23,6 +23,8 @@ internal sealed class WidgetProvider : IWidgetProvider
     // Load template files once from packaged output.
     private static readonly Lazy<string> MainTemplate = new(() => LoadTemplate("Templates/CatFactTemplate.json"));
     private static readonly Lazy<string> LoadingTemplate = new(() => LoadTemplate("Templates/LoadingTemplate.json"));
+    // Background image as a data URI because widget card background does not reliably resolve ms-appx URIs.
+    private static readonly Lazy<string> BackgroundImageDataUri = new(() => LoadImageAsDataUri("Assets/background-small.png", "image/png"));
 
     public WidgetProvider()
     {
@@ -82,11 +84,7 @@ internal sealed class WidgetProvider : IWidgetProvider
     {
         var widget = GetOrCreateWidget(widgetContext, null);
         SendFactWidget(widget, null);
-
-        if (string.IsNullOrWhiteSpace(widget.CustomState) || widget.CustomState == DefaultFact)
-        {
-            _ = RefreshAndUpdateAsync(widget.WidgetId);
-        }
+        _ = RefreshAndUpdateAsync(widget.WidgetId);
     }
 
     public void Deactivate(string widgetId)
@@ -201,7 +199,7 @@ internal sealed class WidgetProvider : IWidgetProvider
         var update = new WidgetUpdateRequestOptions(widget.WidgetId)
         {
             Template = MainTemplate.Value,
-            Data = BuildDataPayload(fact, errorMessage),
+            Data = BuildDataPayload(fact, errorMessage, BackgroundImageDataUri.Value),
             CustomState = fact
         };
 
@@ -250,14 +248,14 @@ internal sealed class WidgetProvider : IWidgetProvider
         }
     }
 
-    private static string BuildDataPayload(string fact, string? errorMessage)
+    private static string BuildDataPayload(string fact, string? errorMessage, string backgroundImageDataUri)
     {
         if (string.IsNullOrWhiteSpace(errorMessage))
         {
-            return $$"""{"fact":"{{EscapeJson(fact)}}","errorMessage":null}""";
+            return $$"""{"fact":"{{EscapeJson(fact)}}","errorMessage":null,"backgroundImageDataUri":"{{EscapeJson(backgroundImageDataUri)}}"}""";
         }
 
-        return $$"""{"fact":"{{EscapeJson(fact)}}","errorMessage":"{{EscapeJson(errorMessage)}}"}""";
+        return $$"""{"fact":"{{EscapeJson(fact)}}","errorMessage":"{{EscapeJson(errorMessage)}}","backgroundImageDataUri":"{{EscapeJson(backgroundImageDataUri)}}"}""";
     }
 
     private static string EscapeJson(string value) =>
@@ -269,6 +267,14 @@ internal sealed class WidgetProvider : IWidgetProvider
         var normalizedPath = relativePath.Replace('/', Path.DirectorySeparatorChar);
         var fullPath = Path.Combine(AppContext.BaseDirectory, normalizedPath);
         return File.ReadAllText(fullPath);
+    }
+
+    private static string LoadImageAsDataUri(string relativePath, string mimeType)
+    {
+        var normalizedPath = relativePath.Replace('/', Path.DirectorySeparatorChar);
+        var fullPath = Path.Combine(AppContext.BaseDirectory, normalizedPath);
+        var imageBytes = File.ReadAllBytes(fullPath);
+        return $"data:{mimeType};base64,{Convert.ToBase64String(imageBytes)}";
     }
 
     private static CompactWidgetInfo Clone(CompactWidgetInfo widget) =>

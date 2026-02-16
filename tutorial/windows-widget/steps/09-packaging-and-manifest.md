@@ -28,6 +28,35 @@ Deploy/pin flow is covered in Step 10.
 - `src/Xakpc.Widgets.Playground/Assets/StoreLogo.png`
 - `src/Xakpc.Widgets.Playground/Assets/screenshots/CatFactScreenshot.png`
 
+## Minimum Required Assets (Package + Widget)
+
+For this project shape, these are the minimum assets you must keep if referenced by manifest:
+
+Package-level visual identity:
+
+- `Assets\StoreLogo.png` (`<Properties><Logo ... />`)
+- `Assets\Square150x150Logo.png` (`uap:VisualElements Square150x150Logo`)
+- `Assets\Square44x44Logo.png` (`uap:VisualElements Square44x44Logo`)
+
+Widget provider/widget definition metadata:
+
+- `Assets\icon.png` (`<ProviderIcons>` and base `<ThemeResources><Icons>`)
+- `Assets\screenshots\CatFactScreenshot.png` (base `<ThemeResources><Screenshots>`)
+
+Optional for minimal setup:
+
+- separate dark/light icon and screenshot files
+  - current tutorial reuses the same icon/screenshot for base, dark, and light blocks
+  - this keeps asset count low while staying explicit
+
+Runtime card content assets (not picker metadata) still required for rendering:
+
+- `Templates\CatFactTemplate.json`
+- `Templates\LoadingTemplate.json`
+- `Assets\background-small.png`
+
+Rule: if a path is referenced in `Package.appxmanifest`, that file must exist in package output.
+
 ## Project Packaging Properties
 
 `Xakpc.Widgets.Playground.csproj` includes:
@@ -53,6 +82,33 @@ For Visual Studio integration, include:
 ```
 
 This helps Visual Studio recognize the project as MSIX-capable for single-project packaging features.
+
+## MSIX Alignment Matrix (Must Match)
+
+Treat this as a contract. If one row is wrong, discovery/activation can fail.
+
+| Area | Required value/pattern | Where |
+| --- | --- | --- |
+| Windows target | `net10.0-windows10.0.22000.0` + `TargetPlatformMinVersion=10.0.22000.0` | `src/Xakpc.Widgets.Playground/Xakpc.Widgets.Playground.csproj` |
+| Concrete architecture | `RuntimeIdentifier` is concrete (`win-x64` default here) | `src/Xakpc.Widgets.Playground/Xakpc.Widgets.Playground.csproj` |
+| Multi-arch availability | `RuntimeIdentifiers=win-x64;win-arm64` | `src/Xakpc.Widgets.Playground/Xakpc.Widgets.Playground.csproj` |
+| MSIX tooling enabled | `EnableMsixTooling=true` + `ProjectCapability Include="Msix"` | `src/Xakpc.Widgets.Playground/Xakpc.Widgets.Playground.csproj` |
+| Launch profile type | `commandName: "MsixPackage"` | `src/Xakpc.Widgets.Playground/Properties/launchSettings.json` |
+| COM launch argument | `-RegisterProcessAsComServer` | `launchSettings.json` and manifest `com:ExeServer Arguments` |
+| Provider CLSID | same GUID in provider attribute + manifest `com:Class Id` + manifest `CreateInstance ClassId` | `WidgetProvider.cs` and `Package.appxmanifest` |
+| COM executable name | `Xakpc.Widgets.Playground.exe` | manifest `com:ExeServer Executable` |
+| Widget app extension name | `Name="com.microsoft.windows.widgets"` | manifest `uap3:AppExtension` |
+| Required capability | `<rescap:Capability Name="runFullTrust" />` | manifest capabilities |
+| Asset references | manifest-referenced logo/icon/screenshot files exist and paths are exact | manifest + project content includes |
+| Source manifest location | edit only `src/.../Package.appxmanifest` (not generated build manifests) | repo layout |
+
+## Package Identity Nuance (Easy To Miss)
+
+`Identity Name` and `Publisher` are package identity keys.
+
+- if you change either, Windows treats it as a different package identity.
+- old package state can remain installed and cause “why am I still seeing old behavior?” confusion.
+- after identity changes, remove old package version and deploy again before testing picker behavior.
 
 ## Manifest Structure (What Matters)
 
@@ -97,7 +153,7 @@ This helps Visual Studio recognize the project as MSIX-capable for single-projec
         <Definitions>
           <Definition
             Id="CatFact_Widget"
-            DisplayName="Cat Fact"
+            DisplayName="Random Cat Fact"
             Description="Random cat facts"
             IsCustomizable="false">
             <Capabilities>
@@ -165,9 +221,18 @@ These are the subtle issues that can make the widget not appear even when code c
   - single-project MSIX debugging depends on `launchSettings.json`
 - Missing screenshot/icon assets in `ThemeResources`:
   - invalid or missing paths can hide widget from picker
+- Editing generated manifests instead of source manifest:
+  - do not edit `build/bin/.../Package.appxmanifest` or `build/bin/.../AppxManifest.xml`
+  - edit only `src/Xakpc.Widgets.Playground/Package.appxmanifest`
+- Hand-writing a `<Dependencies>` block in source manifest:
+  - not required in this project source file
+  - packaging/build generates dependency entries as needed
 - Stale deployment state:
   - old installed package can keep old manifest metadata
   - after manifest changes, rebuild and redeploy before re-checking picker
+- Identity drift during experimentation:
+  - changing `Identity Name`/`Publisher` changes package identity
+  - ensure you are testing the currently deployed identity, not an older one
 
 ## Fast Verification Checklist (Before Opening Widget Picker)
 
@@ -176,11 +241,17 @@ These are the subtle issues that can make the widget not appear even when code c
 3. Manifest contains both extensions:
    - `windows.comServer`
    - `windows.appExtension` with `Name="com.microsoft.windows.widgets"`
-4. `launchSettings.json` includes `MsixPackage` profile with COM server argument.
-5. Asset paths referenced by manifest exist in project:
+4. Verify source manifest path:
+   - `src/Xakpc.Widgets.Playground/Package.appxmanifest`
+5. `launchSettings.json` includes `MsixPackage` profile with COM server argument.
+6. Asset paths referenced by manifest exist in project:
+   - `Assets\StoreLogo.png`
+   - `Assets\Square150x150Logo.png`
+   - `Assets\Square44x44Logo.png`
    - provider icon
    - widget screenshot
-6. Package redeployed after latest manifest edits.
+7. Package redeployed after latest manifest edits.
+8. Confirm currently installed package identity matches current manifest identity.
 
 ## Launch Profile Requirement (Single-Project MSIX)
 
@@ -196,6 +267,11 @@ Recommended profile:
     "Provider": {
       "commandName": "MsixPackage",
       "commandLineArgs": "-RegisterProcessAsComServer"
+    },
+    "Provider on launch": {
+      "commandName": "MsixPackage",
+      "commandLineArgs": "-RegisterProcessAsComServer",
+      "doNotLaunchApp": true
     }
   }
 }
@@ -228,6 +304,7 @@ Expected result: successful build with manifest and packaging metadata included.
 - wrong widget definition id in manifest vs provider expectations
 - building packaged output without a concrete runtime identifier (`win-x64` / `win-arm64`)
 - missing/invalid screenshot paths in `ThemeResources` (widget may not show in picker)
+- editing generated `build/bin` manifest instead of source `src/.../Package.appxmanifest`
 - changing manifest but checking picker before redeploying updated package
 
 ## Next Step
