@@ -4,6 +4,7 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
+[![Tutorial][tutorial-shield]][tutorial-url]
 
 <!-- PROJECT LOGO -->
 <br />
@@ -34,7 +35,6 @@
     </li>
     <li><a href="#project-structure">Project Structure</a></li>
     <li><a href="#tutorial">Tutorial</a></li>
-    <li><a href="#advanced-example">Advanced Example</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
@@ -42,9 +42,9 @@
 
 ## About The Project
 
-A tutorial and reference repository for building native **Windows 11 widgets** with C# and Windows App SDK.
+A companion repository for the [Create Your First Windows Widget with C#](https://xakpc.dev/windows-widgets/create-windows-widget/) tutorial. Build native **Windows 11 widgets** with C# and Windows App SDK.
 
-The main project (`src/Xakpc.Widgets.Playground`) implements a **Cat Fact widget** end-to-end — from COM activation and MSIX packaging to Adaptive Card rendering and user interaction. It is accompanied by a 13-step written tutorial and an advanced multi-widget example.
+The project implements a **Cat Fact widget** end-to-end — from COM activation and MSIX packaging to Adaptive Card rendering and user interaction.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -77,7 +77,7 @@ The main project (`src/Xakpc.Widgets.Playground`) implements a **Cat Fact widget
 3. Select the **MsixPackage** launch profile and build/deploy (F5)
 4. Open the Windows **Widget Board** (Win + W) and add the *Cat Fact* widget
 
-For a detailed walkthrough see the [tutorial](#tutorial) below.
+For a detailed walkthrough see the [full tutorial](https://xakpc.dev/windows-widgets/create-windows-widget/).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -85,12 +85,9 @@ For a detailed walkthrough see the [tutorial](#tutorial) below.
 
 ```
 ├── src/
-│   └── Xakpc.Widgets.Playground/   # Tutorial widget — Cat Fact provider
-├── example/
-│   └── Xakpc.Widgets.Witals/       # Advanced example — multi-widget system vitals
+│   └── Xakpc.Widgets.Playground/   # Cat Fact widget provider
 └── tutorial/
-    └── windows-widget/              # 13-step written guide
-        ├── README.md
+    └── windows-widget/              # Step-by-step written guide
         └── steps/
 ```
 
@@ -98,9 +95,9 @@ For a detailed walkthrough see the [tutorial](#tutorial) below.
 
 ## Tutorial
 
-The full guide is also available as a blog post: [Create Your First Windows Widget with C#](https://xakpc.dev/windows-widgets/create-windows-widget/)
+The full guide is available as a blog post: [Create Your First Windows Widget with C#](https://xakpc.dev/windows-widgets/create-windows-widget/)
 
-The source for the tutorial lives in [`tutorial/windows-widget/README.md`](tutorial/windows-widget/README.md). It covers every step from an empty project to a deployed widget:
+The tutorial source lives in [`tutorial/windows-widget/`](tutorial/windows-widget/README.md) and covers every step from an empty project to a deployed widget:
 
 1. [Architecture and Prerequisites](tutorial/windows-widget/steps/01-architecture-and-prereqs.md)
 2. [Create and Configure the Base Project](tutorial/windows-widget/steps/02-create-project.md)
@@ -118,17 +115,6 @@ The source for the tutorial lives in [`tutorial/windows-widget/README.md`](tutor
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Advanced Example
-
-The [`example/Xakpc.Widgets.Witals/`](example/Xakpc.Widgets.Witals/) project demonstrates patterns beyond the tutorial:
-
-* **Multiple widgets** — CPU, GPU, Memory, and Network vitals in a single provider
-* **Dependency injection** via `Microsoft.Extensions.DependencyInjection`
-* **Polling data sources** that push live system metrics to the Widget Board
-* **Widget customization** through Adaptive Card action handling
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
@@ -140,6 +126,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 * [Windows App SDK — Widget providers](https://learn.microsoft.com/en-us/windows/apps/design/widgets/widget-providers-get-started)
 * [catfact.ninja API](https://catfact.ninja/)
 * [Adaptive Cards](https://adaptivecards.io/)
+* [xakpc.dev](https://xakpc.dev/)
 * [Best-README-Template](https://github.com/othneildrew/Best-README-Template)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -151,3 +138,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 [issues-url]: https://github.com/xakpc/widgets.playground/issues
 [license-shield]: https://img.shields.io/github/license/xakpc/widgets.playground.svg?style=for-the-badge
 [license-url]: https://github.com/xakpc/widgets.playground/blob/main/LICENSE
+[tutorial-shield]: https://img.shields.io/badge/Tutorial-Read%20on%20blog-blue?style=for-the-badge
+[tutorial-url]: https://xakpc.dev/windows-widgets/create-windows-widget/
