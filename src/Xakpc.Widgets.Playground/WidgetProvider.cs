@@ -33,6 +33,7 @@ internal sealed class WidgetProvider : IWidgetProvider
 
     public void CreateWidget(WidgetContext widgetContext)
     {
+        Console.WriteLine($"Creating widget {widgetContext.Id} of definition {widgetContext.DefinitionId}");
         var widget = GetOrCreateWidget(widgetContext, null);
         SendLoadingWidget(widget);
         // IWidgetProvider methods are sync; refresh runs in background.
@@ -70,6 +71,7 @@ internal sealed class WidgetProvider : IWidgetProvider
 
     public void OnWidgetContextChanged(WidgetContextChangedArgs contextChangedArgs)
     {
+        Console.WriteLine($"Widget context changed for widget {contextChangedArgs.WidgetContext.Id} of definition {contextChangedArgs.WidgetContext.DefinitionId}");
         var widget = GetWidgetSnapshot(contextChangedArgs.WidgetContext.Id);
         if (widget is null)
         {
@@ -82,6 +84,7 @@ internal sealed class WidgetProvider : IWidgetProvider
 
     public void Activate(WidgetContext widgetContext)
     {
+        Console.WriteLine($"Activating widget {widgetContext.Id} of definition {widgetContext.DefinitionId}");
         var widget = GetOrCreateWidget(widgetContext, null);
         SendFactWidget(widget, null);
         _ = RefreshAndUpdateAsync(widget.WidgetId);
@@ -89,6 +92,7 @@ internal sealed class WidgetProvider : IWidgetProvider
 
     public void Deactivate(string widgetId)
     {
+        Console.WriteLine($"Deactivating widget {widgetId}");
         // Intentionally minimal for tutorial: no active polling to pause.
     }
 
@@ -194,20 +198,22 @@ internal sealed class WidgetProvider : IWidgetProvider
     }
 
     private void SendFactWidget(CompactWidgetInfo widget, string? errorMessage)
-    {
-        var fact = string.IsNullOrWhiteSpace(widget.CustomState) ? DefaultFact : widget.CustomState;
-        var update = new WidgetUpdateRequestOptions(widget.WidgetId)
         {
-            Template = MainTemplate.Value,
-            Data = BuildDataPayload(fact, errorMessage, BackgroundImageDataUri.Value),
-            CustomState = fact
-        };
+            var fact = string.IsNullOrWhiteSpace(widget.CustomState) ? DefaultFact : widget.CustomState;
+            var update = new WidgetUpdateRequestOptions(widget.WidgetId)
+            {
+                Template = MainTemplate.Value,
+                Data = BuildDataPayload(fact, errorMessage, BackgroundImageDataUri.Value),
+                CustomState = fact
+            };
 
-        WidgetManager.GetDefault().UpdateWidget(update);
-    }
+            WidgetManager.GetDefault().UpdateWidget(update);
+        }
 
     private void RecoverRunningWidgets()
     {
+        Console.WriteLine("Recovering widgets...");
+
         try
         {
             // Rehydrate in-memory state from host-persisted CustomState.
